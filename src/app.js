@@ -63,12 +63,32 @@ app.delete("/user", async (req, res) => {
 });
 
 //update with the help of id passed
-app.patch("/user", async (req, res) => {
-  const { userId, ...data } = req.body;
+app.patch("/user/:userId", async (req, res) => {
+  const data = req.body;
+  const userId  = req.params.userId;
+
+  //allowed fields fo patching
+  const allowedFields = ["gender","photoUrl","about","skills"];
+
+  //checking if any invalid field is being updated
+  const check = Object.keys(data).filter((key) => !allowedFields.includes(key))
+
+  if(check.length > 0){
+    return res.status(400).json({
+      error:`You can only update: ${allowedFields.join(", ")}`
+    })
+  }
+
+  if(data.skills && data.skills.length > 5){
+    return res.status(400).json({
+      error: "Skills cannot have more than 5 entries"
+    });
+  }
+
   try {
     const change = await User.findByIdAndUpdate(userId, data, {
       new: false,
-      runValidators: true,
+      runValidators: true, //runs schema level validation
     });
     console.log(change);
     res.send("successfully updated");
