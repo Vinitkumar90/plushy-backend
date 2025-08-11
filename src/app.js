@@ -12,7 +12,7 @@ app.use(express.json());
 app.post("/signup", async (req, res) => {
   const newUser = new User(req.body);
   console.log(newUser);
-
+  
   try {
     await newUser.save();
     res.send("user added successfully");

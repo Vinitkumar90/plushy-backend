@@ -1,55 +1,72 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
-const userSchema = new mongoose.Schema({
-    firstName:{
-        type : String,
-        required: true,
-        minLength:4,
-        maxLength: 50
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+      minLength: 4,
+      maxLength: 50,
     },
-    lastName:{
-        type: String,
+    lastName: {
+      type: String,
     },
-    emailId:{
-        type: String,
-        unique:true,
-        trim:true,
-        required:true,
-        lowercase:true
+    emailId: {
+      type: String,
+      unique: true,
+      trim: true,
+      required: true,
+      lowercase: true,
+      validate:{
+        validator : function(value){
+            return validator.isEmail(value)
+        },
+        message : "enter valid email"
+      }
     },
-    password:{
-        type: String,
-        required:true
+    password: {
+      type: String,
+      required: true,
     },
-    age:{
-        type: Number,
-        min:18
+    age: {
+      type: Number,
+      min: 18,
     },
-    gender:{
-        type: String,
-        validate(value){
-            if(!["male","female","others"].includes(value)){
-                throw new Error("Gender data is not valid");
-            }
+    gender: {
+      type: String,
+      validate(value) {
+        if (!["male", "female", "others"].includes(value)) {
+          throw new Error("Gender data is not valid");
+        }
+      },
+    },
+    photoUrl: {
+      type: String,
+      default:
+        "https://thumbs.dreamstime.com/b/default-avatar-profile-vector-user-profile-default-avatar-profile-vector-user-profile-profile-179376714.jpg",
+        validate:{
+            validator: function(value){
+                return validator.isURL(value)
+            },
+            message: "enter proper url"
         }
     },
-    photoUrl:{
-        type:String,
-        default:"https://thumbs.dreamstime.com/b/default-avatar-profile-vector-user-profile-default-avatar-profile-vector-user-profile-profile-179376714.jpg"
+    about: {
+      type: String,
+      default: "This is the default about section",
     },
-    about:{
-        type:String,
-        default: "This is the default about section"
+    skills: {
+      type: [String],
     },
-    skills:{
-        type:[String]
-    }
-},{
-    timestamps:true,
-})
+  },
+  {
+    timestamps: true,
+  }
+);
 
 //Hey, I want to create a model (class) called User that follows this userSchema.
 //model
-const User = mongoose.model("User",userSchema);  //lowercase and plural collection name
+const User = mongoose.model("User", userSchema); //lowercase and plural collection name
 
 module.exports = User;
