@@ -1,7 +1,11 @@
+require("dotenv").config()
 const express = require("express");
-const app = express();
 const connectDb = require("./config/database.js");
 const User = require("./models/user.js");
+
+const app = express();
+const PORT = process.env.PORT || 7000
+
 
 app.use(express.json());
 
@@ -59,24 +63,31 @@ app.delete("/user", async (req, res) => {
 });
 
 //update with the help of id passed
-app.patch("/user",async (req,res)=>{
-  const{userId, ...data} = req.body;
-  try{
-    const change = await User.findByIdAndUpdate(userId, data,{new:false})
-    console.log(change);
-    res.send("successfully updated")
-  }catch(err){
-    res.status(404).send("error updating...")
-  }
-})
-
-connectDb()
-  .then(() => {
-    console.log("connection established to the cluster");
-    app.listen(7000, () => {
-      console.log("app listening on port 7000");
+app.patch("/user", async (req, res) => {
+  const { userId, ...data } = req.body;
+  try {
+    const change = await User.findByIdAndUpdate(userId, data, {
+      new: false,
+      runValidators: true,
     });
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+    console.log(change);
+    res.send("successfully updated");
+  } catch (err) {
+    res.status(404).send("error updating...");
+  }
+});
+
+
+const startServer = async() => {
+  try{
+    await connectDb();
+    app.listen(PORT, () => {
+      console.log(`App listening on port ${PORT}`);
+    })
+  }
+  catch(error){
+    console.error("Failed to start the server",error)
+  }
+}
+
+startServer();
