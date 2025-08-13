@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken")
+const bcrypt = require("bcrypt")
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,12 +20,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       required: true,
       lowercase: true,
-      validate:{
-        validator : function(value){
-            return validator.isEmail(value)
+      validate: {
+        validator: function (value) {
+          return validator.isEmail(value);
         },
-        message : "enter valid email"
-      }
+        message: "enter valid email",
+      },
     },
     password: {
       type: String,
@@ -45,12 +47,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default:
         "https://thumbs.dreamstime.com/b/default-avatar-profile-vector-user-profile-default-avatar-profile-vector-user-profile-profile-179376714.jpg",
-        validate:{
-            validator: function(value){
-                return validator.isURL(value)
-            },
-            message: "enter proper url"
-        }
+      validate: {
+        validator: function (value) {
+          return validator.isURL(value);
+        },
+        message: "enter proper url",
+      },
     },
     about: {
       type: String,
@@ -64,6 +66,23 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.methods.getJwt = function () {
+  const user = this
+  const token = jwt.sign({ _id: user._id}, "randomriya", {
+    expiresIn: "7d",
+  });
+  return token
+};
+
+userSchema.methods.passwordCheck = async function(passwordInput){
+  const user = this;
+  const hashedPassword = user.password;
+  const result = await bcrypt.compare(passwordInput,hashedPassword)
+  return result;
+}
+
+
 
 //Hey, I want to create a model (class) called User that follows this userSchema.
 //model

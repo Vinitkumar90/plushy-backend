@@ -1,113 +1,105 @@
-require("dotenv").config()
+require("dotenv").config();
 const express = require("express");
 const connectDb = require("./config/database.js");
 const User = require("./models/user.js");
+const { validateSignupData, validateEmail } = require("./utils/validation.js");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const {userAuth} = require("./middleware/auth");
 
 const app = express();
-const PORT = process.env.PORT || 7000
-
+const PORT = process.env.PORT || 7000;
 
 app.use(express.json());
+app.use(cookieParser());
 
+//user signUp api
 app.post("/signup", async (req, res) => {
-  const newUser = new User(req.body);
-  console.log(newUser);
-  
   try {
+    //validation of data
+    validateSignupData(req);
+    const { firstName, lastName, emailId, password } = req.body;
+    //now encrypting the password
+
+    const hashedPass = await bcrypt.hash(password, 10);
+
+    //creating a new user
+    const newUser = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashedPass,
+    });
     await newUser.save();
-    res.send("user added successfully");
+    res.send("User added Successfully!");
   } catch (err) {
-    res.status(500).send("failed to save user");
+    res.status(400).send("ERROR : " + err.message);
   }
 });
 
-//get the user with a specific email
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-
+//user login api
+app.post("/login", async (req, res) => {
   try {
-    const users = await User.find({ emailId: userEmail });
-    if (users.length == 0) {
-      res.send("user not found");
-    } else {
-      res.send(userEmail);
+    validateEmail(req);
+    const { emailId, password } = req.body;
+    //finding user by email hereeee
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
     }
-  } catch (err) {
-    res.status(404).send(err);
-  }
-});
-
-//get feed
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    if (!users) {
-      res.status(404).send("user not found");
-    } else {
-      res.send(users);
+    //comparing password
+    const verify = await user.passwordCheck(password)
+    if (!verify) {
+      return res.status(400).json({ error: "Invalid email or password" });
     }
-  } catch {
-    res.status(404).send("something went wrong");
-  }
-});
 
-//delete user by id and delete
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    await User.findOneAndDelete({ _id: userId });
-    res.send("user deleted successfully");
-  } catch (err) {
-    res.status(404).send("user not found");
-  }
-});
+    const token = await user.getJwt()  //token signed while login for a particular user
+    res.cookie("token", token, {
+      expires: new Date(Date.now()+ 8 * 3600000)
+    }); //sending cookie with token having that users Id
 
-//update with the help of id passed
-app.patch("/user/:userId", async (req, res) => {
-  const data = req.body;
-  const userId  = req.params.userId;
-
-  //allowed fields fo patching
-  const allowedFields = ["gender","photoUrl","about","skills"];
-
-  //checking if any invalid field is being updated
-  const check = Object.keys(data).filter((key) => !allowedFields.includes(key))
-
-  if(check.length > 0){
-    return res.status(400).json({
-      error:`You can only update: ${allowedFields.join(", ")}`
-    })
-  }
-
-  if(data.skills && data.skills.length > 5){
-    return res.status(400).json({
-      error: "Skills cannot have more than 5 entries"
+    //successful login
+    res.status(200).json({
+      message: "Login successful",
+      userId: user._id,
     });
-  }
-
-  try {
-    const change = await User.findByIdAndUpdate(userId, data, {
-      new: false,
-      runValidators: true, //runs schema level validation
-    });
-    console.log(change);
-    res.send("successfully updated");
-  } catch (err) {
-    res.status(404).send("error updating...");
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
+//get profile
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user);
+  } catch (error) {
+    res.send("Error " + error.message);
+  }
+});
 
-const startServer = async() => {
+//send connection request
+app.post("/sendConnectionRequest",userAuth,(req,res) => {
   try{
+    const user = req.user;
+    res.send(user.firstName+" sent u a connection request")
+  }catch(error){
+    res.send("Error: "+ error.message)
+  }
+})
+
+
+
+const startServer = async () => {
+  try {
     await connectDb();
     app.listen(PORT, () => {
       console.log(`App listening on port ${PORT}`);
-    })
+    });
+  } catch (error) {
+    console.error("Failed to start the server", error);
   }
-  catch(error){
-    console.error("Failed to start the server",error)
-  }
-}
+};
 
 startServer();
