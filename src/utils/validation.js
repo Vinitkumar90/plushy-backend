@@ -19,7 +19,21 @@ const validateEmail = (req) => {
     }
 }
 
+const validateEditProfileData = (req) => {
+    const allowedFields = ["gender","photoUrl","about","skills"]
+    const requestedFields = Object.keys(req.body);
+
+    const invalidFields = requestedFields.filter((field) => !allowedFields.includes(field))
+    if(invalidFields.length > 0){
+        return false;
+    }
+
+    return true;
+  
+}
+
 module.exports = {
     validateSignupData,
-    validateEmail
+    validateEmail,
+    validateEditProfileData
 }
