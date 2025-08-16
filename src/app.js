@@ -17,7 +17,7 @@ app.use("/",authRouter)
 app.use("/",profileRouter)
 app.use("/",requestRouter)
 
-const startServer = async () => {
+const main = async () => {
   try {
     await connectDb();
     app.listen(PORT, () => {
@@ -28,4 +28,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+main();
