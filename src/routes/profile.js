@@ -1,7 +1,3 @@
-//profile view
-//profile edit  //using function for validating fields
-// profile password edit
-
 const express = require("express");
 const { userAuth } = require("../middleware/auth");
 const { validateEditProfileData } = require("../utils/validation");
