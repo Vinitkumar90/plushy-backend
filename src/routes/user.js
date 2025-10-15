@@ -83,7 +83,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     const page = req.query.page || 1;
     let limit = req.query.limit || 10;
     limit = limit > 10 ? 10 : limit;
-    const skip = page - 1 * limit; //check api.md
+    const skip = (page - 1) * limit; //check api.md
 
     const loggedInUser = req.user;
     //now finding all the document where i was involved
