@@ -11,7 +11,7 @@ const User = require("../models/user");
 
 const userRouter = express.Router();
 
-const USER_SAFE_DATA = "firstName lastName phtoUrl age gender about skills";
+const USER_SAFE_DATA = "firstName lastName photoUrl age gender about skills";
 
 //1 loggedin user pending requests
 userRouter.get("/user/requests/recieved", userAuth, async (req, res) => {
@@ -77,9 +77,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     //user should see the cards except
     // - his own card
     // - his connections
-    // - ignored people
-    // - already sent connection
-    // - basicaaalyyy all the people he has already interacted
+    // - already sent connection (interested or ignored)
     const page = req.query.page || 1;
     let limit = req.query.limit || 10;
     limit = limit > 10 ? 10 : limit;
@@ -127,6 +125,6 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
   }
 });
 
-//no interaction virat,dhoni
+//no interaction with virat,dhoni so only they will come on feed
 
 module.exports = userRouter;
